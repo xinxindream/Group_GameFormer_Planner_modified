@@ -1,0 +1,98 @@
+import torch
+import torch.nn as nn
+
+class Attention(nn.Module):
+    def __init__(self, dim, num_heads=8, qkv_bias=False, attn_drop=0., proj_drop=0., token_num=196):
+        super().__init__()
+        self.num_heads = num_heads
+        head_dim = dim // num_heads
+        self.scale = head_dim ** -0.5
+
+        self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+        self.attn_drop = nn.Dropout(attn_drop)
+        self.proj = nn.Linear(dim, dim)
+        self.proj_drop = nn.Dropout(proj_drop)
+
+    def forward(self, x, attn_mask=None, key_padding_mask=None):
+        B, N, C = x.shape
+        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        q, k, v = qkv.unbind(0)
+
+        attn = (q @ k.transpose(-2, -1)) * self.scale
+
+        # Apply key padding mask
+        if key_padding_mask is not None:
+            attn = attn.masked_fill(
+                key_padding_mask.unsqueeze(1).unsqueeze(2),
+                float('-inf')
+            )
+
+        # Key pruning (attention level)
+        max_att = torch.max(attn, dim=-1, keepdim=True)[0]
+        attn = attn - max_att
+
+        eps = 1e-6
+        attn = attn.to(torch.float32).exp_() * attn_mask.unsqueeze(1).to(torch.float32)
+        attn = (attn + eps/N) / (attn.sum(dim=-1, keepdim=True) + eps)
+
+        attn = self.attn_drop(attn)
+
+        x = (attn @ v).transpose(1, 2).reshape(B, N, C)
+        x = self.proj(x)
+        x = self.proj_drop(x)
+
+        cls_attn = attn[:, :, 0, 1:].sum(1) / self.num_heads
+        patch_attn = attn[:, :, 1:, 1:].sum(1) / self.num_heads
+        return x, cls_attn, patch_attn
+
+
+import torch
+import torch.nn as nn
+
+class Attention(nn.Module):
+    def __init__(self, dim, num_heads=8, qkv_bias=False, attn_drop=0., proj_drop=0., token_num=196):
+        super().__init__()
+        self.num_heads = num_heads
+        head_dim = dim // num_heads
+        self.scale = head_dim ** -0.5
+
+        self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+        self.attn_drop = nn.Dropout(attn_drop)
+        self.proj = nn.Linear(dim, dim)
+        self.proj_drop = nn.Dropout(proj_drop)
+
+    def forward(self, x, attn_mask=None, key_padding_mask=None):
+        B, N, C = x.shape
+        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        q, k, v = qkv.unbind(0)
+
+        attn = (q @ k.transpose(-2, -1)) * self.scale
+
+        # Apply key padding mask
+        if key_padding_mask is not None:
+            # Reshape to (batch_size, num_heads, sequence_length, sequence_length)
+            key_padding_mask = key_padding_mask.unsqueeze(1).unsqueeze(2)
+            # Expand to the same size as the attention dimension
+            key_padding_mask = key_padding_mask.expand(B, self.num_heads, N, N)
+            # Set attention weights where key_padding_mask is true to negative infinity
+            attn = attn.masked_fill(key_padding_mask, float('-inf'))
+
+        # Scale and mask softmax
+        eps = 1e-6
+        if attn_mask is not None:
+            attn += attn_mask.unsqueeze(1).to(attn.dtype)
+        attn = attn.softmax(dim=-1)
+        attn = self.attn_drop(attn)
+
+        x = (attn @ v).transpose(1, 2).reshape(B, N, C)
+        x = self.proj(x)
+        x = self.proj_drop(x)
+
+        # Optional: Return attention weights for visualization or other purposes
+        return x, attn
+
+# Example usage
+attention = Attention(dim=512)
+input_tensor = torch.randn(10, 32, 512)  # (batch_size, sequence_length, feature_dim)
+key_padding_mask = torch.zeros(10, 32).bool()  # Example mask
+output, attn_weights = attention(input_tensor, key_padding_mask=key_padding_mask)
