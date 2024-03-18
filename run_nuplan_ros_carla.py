@@ -43,12 +43,12 @@ class gameformer_planner(object):
         # self._agents_past_queue = []
         # self._ego_past_queue = []
 
-        self._agents_past_queue = deque(maxlen = 22)
+        self._agents_past_queue = deque(maxlen = 22)    # 历史状态下的agents队列 
         self._ego_past_queue = deque(maxlen = 22)
 
         self._map_lanes = None
         self._route_lanes = None
-        self._added_obstacles = None
+        self._added_obstacles = None    # 障碍物
         self._last_data = None
         self._last_plan = None
         self._last_ego_state = None
@@ -523,8 +523,8 @@ class gameformer_planner(object):
             print('plan pub')
 
     def run(self):
+        # 每隔0.2s触发定时器，调用回调函数timer_callback
         timer = rospy.Timer(rospy.Duration(0.2), self.timer_callback)
-        # timer = rospy.Timer(rospy.Rate(5), self.timer_callback)
 
 def main(args):
     rospy.init_node('learn_based_planner', log_level=rospy.INFO)

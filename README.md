@@ -54,8 +54,15 @@ python xiaoba_rosbag_test.py  --model_path ./training_log/{experiment_name}/xxx.
 # 测试进行，启动rviz
 rviz -d xiaoba_rosbag_test.rviz 
 ```
+## 四、carla仿真模拟
+### 1、相关文件
 
-## 四、一些问题
+### 2、操作流程
+1. 数据处理&&模型训练
+> 直接用[第三节]()中的结果
+2. 萨芬
+
+## 五、一些问题
 1. ImportError: /lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.29' not found  
 > https://zhuanlan.zhihu.com/p/615111375?utm_id=0  
 
@@ -65,3 +72,9 @@ rviz -d xiaoba_rosbag_test.rviz
 > pkill -9 python  
 > conda install -c conda-forge scikit-sparse  
 > conda install -c conda-forge libstdcxx-ng=12
+
+3. cpu_perform_command
+> tuned-adm profile latency-performance  
+> tuned-adm active  
+> cpufreq-info  
+> cat /sys/devices/system/cpu/intel_pstate/no_turbo

@@ -1,7 +1,0 @@
-tuned-adm profile latency-performance
-
-tuned-adm active
-
-cpufreq-info
-
-cat /sys/devices/system/cpu/intel_pstate/no_turbo
