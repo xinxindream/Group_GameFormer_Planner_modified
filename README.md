@@ -61,6 +61,19 @@ rviz -d xiaoba_rosbag_test.rviz
 1. 数据处理&&模型训练
 > 直接用[第三节]()中的结果
 2. 萨芬
+启动carla
+cd ~ && ./start_carla.sh
+
+启动carla_ros_bridge
+cd /home/ustc/Carla/carla-ros-bridge/catkin_ws
+roslaunch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle_apollo_adv_ph_sr.launch
+
+启动msg
+cd /home/ustc/Carla/carla-ros-bridge/kxdun_message_ws
+source ./devel/setup.bash
+rosrun kxdun_planning_mpdp_pkg world_model_ros_rl_node
+
+
 
 ## 五、一些问题
 1. ImportError: /lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.29' not found  
